@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Gochi+Hand&family=Archivo:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --table: #E7EAE2;
+  --table-glow: #F5F7F1;
+  --ink: #1A1610;
+  --ink-soft: #6b6354;
+  --paper: #F7F1E1;
+  --paper-shadow: rgba(20, 15, 10, 0.20);
+  --film-black: #1B1611;
+  --acc-a: #C89B3C;
+  --acc-b: #2F7A78;
+  --acc-c: #B23A2E;
+  --pass: #4B7A51;
+  --warn: #B23A2E;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(ellipse 900px 600px at 50% -10%, var(--table-glow), transparent 60%),
+    var(--table);
+  color: var(--ink);
+  font-family: 'Archivo', Arial, sans-serif;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+.font-hand {
+  font-family: 'Gochi Hand', cursive;
+}
+
+.font-bricolage {
+  font-family: 'Bricolage Grotesque', Arial, sans-serif;
+}
+
+/* Custom Filmstrip styling */
+.filmstrip::before,
+.filmstrip::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 18px;
+  background-image: radial-gradient(circle at center, var(--table) 5px, transparent 5.5px);
+  background-size: 30px 18px;
+  background-repeat: repeat-x;
+  background-position: 8px center;
+}
+
+.filmstrip::before {
+  top: 0;
+}
+
+.filmstrip::after {
+  bottom: 0;
+}
+
+/* Scrollbars for film containers */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--film-black);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--acc-b);
+  border-radius: 3px;
+}
