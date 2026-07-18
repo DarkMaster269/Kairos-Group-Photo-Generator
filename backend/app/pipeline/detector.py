@@ -113,6 +113,34 @@ def _compute_iou(boxA: Tuple[int, int, int, int], boxB: Tuple[int, int, int, int
     return interArea / float(boxAArea + boxBArea - interArea)
 
 
+CENTER_DIST_RATIO: float = 0.5
+"""Fallback dedup: two boxes are treated as the same face if their centers are
+within this fraction of their average size — even when IoU is low. Needed
+because remapping a bounding box from a rotated frame back to axis-aligned
+coordinates inflates and shifts the box, so the same real face detected at
+different rotation angles can have deceptively low IoU despite clearly being
+the same face."""
+
+
+def _is_duplicate_face(
+    boxA: Tuple[int, int, int, int],
+    boxB: Tuple[int, int, int, int],
+    iou_threshold: float = IOU_THRESHOLD,
+    center_dist_ratio: float = CENTER_DIST_RATIO,
+) -> bool:
+    """Decide whether two detections (possibly from different rotation angles)
+    are the same real face, using IoU with a center-distance fallback."""
+    if _compute_iou(boxA, boxB) > iou_threshold:
+        return True
+
+    cxA, cyA = boxA[0] + boxA[2] / 2.0, boxA[1] + boxA[3] / 2.0
+    cxB, cyB = boxB[0] + boxB[2] / 2.0, boxB[1] + boxB[3] / 2.0
+    avg_size = (boxA[2] + boxA[3] + boxB[2] + boxB[3]) / 4.0
+    dist = ((cxA - cxB) ** 2 + (cyA - cyB) ** 2) ** 0.5
+
+    return dist < avg_size * center_dist_ratio
+
+
 def _pad_to_square(image: np.ndarray) -> Tuple[np.ndarray, int, int]:
     """Pad an image with black borders to make it square, preserving aspect ratio."""
     h, w = image.shape[:2]
@@ -221,12 +249,12 @@ class FaceMeshDetector:
                 if bbox[2] > 5 and bbox[3] > 5:
                     all_raw_faces.append({"bbox": bbox, "confidence": score})
 
-        # 2. Deduplicate across rotation passes with IoU-based NMS
+        # 2. Deduplicate across rotation passes with IoU + center-distance NMS
         all_raw_faces.sort(key=lambda f: f["confidence"], reverse=True)
         unique_bboxes: List[Tuple[int, int, int, int]] = []
         for face in all_raw_faces:
             box = face["bbox"]
-            if not any(_compute_iou(box, u) > IOU_THRESHOLD for u in unique_bboxes):
+            if not any(_is_duplicate_face(box, u) for u in unique_bboxes):
                 unique_bboxes.append(box)
 
         # 3. For each distinct bounding box, crop, pad to square, and run FaceLandmarker
