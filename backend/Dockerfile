@@ -7,7 +7,7 @@ FROM python:3.11
 # Set working directory inside the container
 WORKDIR /app
 
-# Install system dependencies (including libgl1 and X11 libs needed by OpenCV/dlib)
+# Install system dependencies (libgl1 + X11 libs required by OpenCV)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     libgl1 \
@@ -16,12 +16,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxext6 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements from the backend folder relative to the repository root
+# Copy and install Python dependencies first (cached layer)
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir python-multipart
 
-# Copy application source code from the backend folder relative to the repository root
+# Pre-download MediaPipe FaceMesh model files at build time so the first
+# pipeline run does not hang waiting for a runtime download from Google.
+RUN python -c "\
+import mediapipe as mp; \
+detector = mp.solutions.face_mesh.FaceMesh(static_image_mode=True, max_num_faces=10, refine_landmarks=True); \
+print('MediaPipe FaceMesh model pre-loaded successfully.'); \
+detector.close()"
+
+# Copy application source code
 COPY backend/app/ ./app/
 
 # Create directory for temporary burst uploads
