@@ -1,28 +1,26 @@
-# ── Kairos backend Dockerfile (Railway & Render optimized) ───────────────────
-# Uses the full Python image (which contains build-essential, cmake, and standard
-# C/C++ libraries pre-installed) to bypass the runc/apt-get build container crash on Railway.
+# ── Kairos backend Dockerfile (Monorepo Optimized) ───────────────────────────
+# Built from the repository root context.
 # ─────────────────────────────────────────────────────────────────────────────
 
 FROM python:3.11
 
-# Set working directory
+# Set working directory inside the container
 WORKDIR /app
 
-# Install system dependencies that might not be in the full image
-# (Headless OpenCV is used, which minimizes GL dependencies)
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies (layer cached unless requirements.txt changes)
-COPY requirements.txt .
+# Copy requirements from the backend folder relative to the repository root
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir python-multipart
 
-# Copy application source
-COPY app/ ./app/
+# Copy application source code from the backend folder relative to the repository root
+COPY backend/app/ ./app/
 
-# Create directory for temporary burst uploads (ephemeral)
+# Create directory for temporary burst uploads
 RUN mkdir -p temp_bursts
 
 # Expose the FastAPI port
