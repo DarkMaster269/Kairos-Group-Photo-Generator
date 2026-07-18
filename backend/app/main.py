@@ -88,6 +88,9 @@ async def upload_burst(
             
             with open(file_path, "wb") as f_out:
                 shutil.copyfileobj(file.file, f_out)
+    except HTTPException:
+        # Re-raise HTTP exceptions directly to preserve their status codes (e.g. 400 Bad Request)
+        raise
     except Exception as e:
         shutil.rmtree(temp_dir, ignore_errors=True)
         raise HTTPException(

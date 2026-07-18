@@ -1,0 +1,48 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Dependency directories
+node_modules/
+jspm_packages/
+web_modules/
+
+# Build outputs
+dist/
+build/
+.svelte-kit/
+.next/
+out/
+
+# Temporary / Cache files
+.eslintcache
+.parcel-cache
+.cache/
+.pytest_cache/
+.ipynb_checkpoints
+
+# Kairos pipeline temp uploads and local test outputs
+backend/temp_bursts/
+test-data/output_clusters/
+test-data/blends/
+test-data/composite_day3.jpg
+test-data/composite_result.jpg
+test-data/composite_result_annotated.jpg
+
+# IDE / System files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
