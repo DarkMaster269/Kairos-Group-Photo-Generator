@@ -28,6 +28,7 @@ class GateResult(BaseModel):
     passed: bool
     confidence: float = Field(..., ge=0.0, le=1.0)
     issues: List[GateIssue] = []
+    person_count_estimate: Optional[int] = Field(None, description="Gate 1 only: estimated number of people in burst")
 
 
 class PipelineResult(BaseModel):

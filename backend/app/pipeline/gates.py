@@ -122,12 +122,14 @@ class AIGateways:
                 ))
 
             passed = len(issues) == 0 and valid
+            person_count = res_json.get("person_count_estimate", None)
             result = GateResult(
                 passed=passed,
                 confidence=1.0 if passed else 0.0,
-                issues=issues
+                issues=issues,
+                person_count_estimate=person_count,
             )
-            logger.info("Gate 1 complete: passed=%s, issues=%d", result.passed, len(result.issues))
+            logger.info("Gate 1 complete: passed=%s, people=%s, issues=%d", result.passed, person_count, len(result.issues))
             return result
 
         except Exception as e:
@@ -363,7 +365,8 @@ class AIGateways:
             return GateResult(
                 passed=len(issues) == 0 and valid,
                 confidence=1.0 if len(issues) == 0 else 0.0,
-                issues=issues
+                issues=issues,
+                person_count_estimate=data.get("person_count_estimate", None),
             )
         except Exception as e:
             logger.error("Failed to load cached Gate 1 response: %s", e)
