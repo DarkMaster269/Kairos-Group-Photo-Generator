@@ -7,9 +7,13 @@ FROM python:3.11
 # Set working directory inside the container
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies (including libgl1 and X11 libs needed by OpenCV/dlib)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
+    libgl1 \
+    libsm6 \
+    libxrender1 \
+    libxext6 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements from the backend folder relative to the repository root
