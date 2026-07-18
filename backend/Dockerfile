@@ -4,7 +4,6 @@
 
 FROM python:3.11
 
-# Set working directory inside the container
 WORKDIR /app
 
 # Install system dependencies (libgl1 + X11 libs required by OpenCV)
@@ -21,29 +20,37 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir python-multipart
 
-# Pre-download MediaPipe FaceMesh model files at build time so the first
-# pipeline run does not hang waiting for a runtime download from Google.
-RUN python -c "\
-import mediapipe as mp; \
-detector = mp.solutions.face_mesh.FaceMesh(static_image_mode=True, max_num_faces=10, refine_landmarks=True); \
-print('MediaPipe FaceMesh model pre-loaded successfully.'); \
-detector.close()"
-
-# Copy application source code
+# Copy application source code (includes the already-committed face_landmarker.task)
 COPY backend/app/ ./app/
+
+# Pre-download the BlazeFace full-range detector model at build time so the
+# first pipeline run doesn't pay that download cost (or risk it failing) live.
+# face_landmarker.task is already committed in app/pipeline/, so this only
+# needs to fetch the one model that isn't bundled in the repo.
+RUN python -c "\
+import urllib.request; \
+urllib.request.urlretrieve( \
+    'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_full_range/float16/1/blaze_face_full_range.tflite', \
+    'app/pipeline/blaze_face_full_range.tflite'); \
+print('BlazeFace full-range detector model pre-downloaded successfully.')"
+
+# Sanity check: make sure both MediaPipe Tasks models actually initialize
+# at build time, so a broken model file fails the build, not a live request.
+RUN python -c "\
+from app.pipeline.detector import FaceMeshDetector; \
+d = FaceMeshDetector(); \
+d.close(); \
+print('FaceMeshDetector (MediaPipe-only) initialized and closed successfully.')"
 
 # Create directory for temporary burst uploads
 RUN mkdir -p temp_bursts
 
-# Expose the FastAPI port
 EXPOSE 8000
 
-# Environment variable defaults
 ENV DEMO_FALLBACK=false \
     GATE_PROVIDER=gemini \
     GEMINI_MODEL=gemini-1.5-flash \
     ANTHROPIC_MODEL=claude-3-5-sonnet-20240620 \
     PORT=8000
 
-# Start uvicorn
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --workers 1"]
